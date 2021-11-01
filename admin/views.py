@@ -1,4 +1,5 @@
 # IMPORTS
+import copy
 from flask import Blueprint, render_template, request, flash
 from flask_login import login_required, current_user
 from app import db, requires_roles
@@ -53,7 +54,7 @@ def create_winning_draw():
     submitted_draw.strip()
 
     # create a new draw object with the form data.
-    new_winning_draw = Draw(user_id=0, draw=submitted_draw, win=True, round=round)
+    new_winning_draw = Draw(user_id=current_user.id, draw=submitted_draw, win=True, round=round, drawkey=current_user.drawkey)
 
     # add the new winning draw to the database
     db.session.add(new_winning_draw)
@@ -75,6 +76,8 @@ def view_winning_draw():
 
     # if a winning draw exists
     if current_winning_draw:
+        user = User.query.filter_by(id=current_winning_draw.user_id).first()
+        current_winning_draw.view_draw(user.drawkey)
         # re-render admin page with current winning draw and lottery round
         return render_template('admin.html', winning_draw=current_winning_draw, name=current_user.firstname)
 
@@ -97,10 +100,22 @@ def run_lottery():
 
         # get all unplayed user draws
         user_draws = Draw.query.filter_by(win=False, played=False).all()
+
+        user_draw_copies = list(map(lambda x: copy.deepcopy(x), user_draws))
+
+        # empty list for decrypted copied draw objects
+        decrypted_user_draws = []
+
+        # decrypt each copied post object and add it to decrypted_posts array.
+        for d in user_draw_copies:
+            user = User.query.filter_by(id=d.user_id).first()
+            d.view_draw(user.drawkey)
+            decrypted_user_draws.append(d)
+
         results = []
 
         # if at least one unplayed user draw exists
-        if user_draws:
+        if decrypted_user_draws:
 
             # update current winning draw as played
             current_winning_draw.played = True
@@ -108,10 +123,14 @@ def run_lottery():
             db.session.commit()
 
             # for each unplayed user draw
-            for draw in user_draws:
+            for draw in decrypted_user_draws:
 
                 # get the owning user (instance/object)
                 user = User.query.filter_by(id=draw.user_id).first()
+
+                # decrypt winning draw
+                admin_user = User.query.filter_by(id=current_winning_draw.user_id).first()
+                current_winning_draw.view_draw(admin_user.drawkey)
 
                 # if user draw matches current unplayed winning draw
                 if draw.draw == current_winning_draw.draw:

@@ -73,8 +73,19 @@ class Draw(db.Model):
         self.win = win
         self.round = round
 
+    def view_draw(self, drawkey):
+        self.user_id = self.user_id
+        self.draw = decrypt(self.draw, drawkey)
+        self.played = self.played
+        self.match = self.match
+        self.win = self.win
+        self.round = self.round
+
 def encrypt(data, drawkey):
     return Fernet(drawkey).encrypt(bytes(data, 'utf-8'))
+
+def decrypt(data, drawkey):
+    return Fernet(drawkey).decrypt(data).decode("utf-8")
 
 def init_db():
     db.drop_all()
