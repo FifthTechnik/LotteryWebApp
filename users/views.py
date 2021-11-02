@@ -75,8 +75,8 @@ def login():
 
         if not user or not check_password_hash(user.password, form.password.data):
 
-            logging.warning('SECURITY - Failed log in attempt (authentication) [%s, %s, %s]', current_user.id,
-                            current_user.email,
+            logging.warning('SECURITY - Failed log in attempt (authentication) [%s, %s]',
+                            form.email.data,
                             request.remote_addr)
 
             # if no match create appropriate error message based on login attempts
@@ -110,7 +110,7 @@ def login():
                 return redirect(url_for('lottery.lottery'))
 
         else:
-            logging.warning('SECURITY - Failed log in attempt (2FA) [%s, %s, %s]', current_user.id, current_user.email,
+            logging.warning('SECURITY - Failed log in attempt (2FA) [%s, %s]', form.email.data,
                             request.remote_addr)
             flash("You have supplied an invalid 2FA token!", "danger")
 
