@@ -76,8 +76,8 @@ def view_winning_draw():
 
     # if a winning draw exists
     if current_winning_draw:
-        user = User.query.filter_by(id=current_winning_draw.user_id).first()
-        current_winning_draw.view_draw(user.drawkey)
+        admin_drawkey = User.query.filter_by(role='admin').first().drawkey
+        current_winning_draw.view_draw(admin_drawkey)
         # re-render admin page with current winning draw and lottery round
         return render_template('admin.html', winning_draw=current_winning_draw, name=current_user.firstname)
 
@@ -100,40 +100,31 @@ def run_lottery():
 
         # get all unplayed user draws
         user_draws = Draw.query.filter_by(win=False, played=False).all()
-
-        user_draw_copies = list(map(lambda x: copy.deepcopy(x), user_draws))
-
-        # empty list for decrypted copied draw objects
-        decrypted_user_draws = []
-
-        # decrypt each copied post object and add it to decrypted_posts array.
-        for d in user_draw_copies:
-            user = User.query.filter_by(id=d.user_id).first()
-            d.view_draw(user.drawkey)
-            decrypted_user_draws.append(d)
-
         results = []
 
         # if at least one unplayed user draw exists
-        if decrypted_user_draws:
+        if user_draws:
 
-            # update current winning draw as played
-            current_winning_draw.played = True
-            db.session.add(current_winning_draw)
-            db.session.commit()
+            # decrypt winning draw
+            admin_drawkey = User.query.filter_by(role='admin').first().drawkey
+            decrypted_current_winning_draw = current_winning_draw.view_draw(admin_drawkey)
 
             # for each unplayed user draw
-            for draw in decrypted_user_draws:
+            for draw in user_draws:
+
+                # update current winning draw as played
+                current_winning_draw.played = True
+                db.session.add(current_winning_draw)
+                db.session.commit()
 
                 # get the owning user (instance/object)
                 user = User.query.filter_by(id=draw.user_id).first()
+                draw.view_draw(user.drawkey)
 
-                # decrypt winning draw
-                admin_user = User.query.filter_by(id=current_winning_draw.user_id).first()
-                current_winning_draw.view_draw(admin_user.drawkey)
+
 
                 # if user draw matches current unplayed winning draw
-                if draw.draw == current_winning_draw.draw:
+                if draw.draw == decrypted_current_winning_draw.draw:
 
                     # add details of winner to list of results
                     results.append((current_winning_draw.round, draw.draw, draw.user_id, user.email))
@@ -147,6 +138,8 @@ def run_lottery():
 
                 # update draw with current lottery round
                 draw.round = current_winning_draw.round
+
+                draw.encrypt_draw(user.drawkey)
 
                 # commit draw changes to DB
                 db.session.add(draw)

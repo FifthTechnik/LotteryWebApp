@@ -80,6 +80,16 @@ class Draw(db.Model):
         self.match = self.match
         self.win = self.win
         self.round = self.round
+        return self
+
+    def encrypt_draw(self, drawkey):
+        self.user_id = self.user_id
+        self.draw = encrypt(self.draw, drawkey)
+        self.played = self.played
+        self.match = self.match
+        self.win = self.win
+        self.round = self.round
+        return self
 
 def encrypt(data, drawkey):
     return Fernet(drawkey).encrypt(bytes(data, 'utf-8'))

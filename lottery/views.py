@@ -64,6 +64,7 @@ def view_draws():
     if len(decrypted_draws) != 0:
         # re-render lottery page with playable draws
         return render_template('lottery.html', playable_draws=decrypted_draws)
+
     else:
         flash('No playable draws.')
         return lottery()
@@ -77,21 +78,23 @@ def check_draws():
     # get played draws
     played_draws = Draw.query.filter_by(played=True, user_id=current_user.id).all()
 
-    # creates a list of copied draw objects which are independent of database.
-    played_draw_copies = list(map(lambda x: copy.deepcopy(x), played_draws))
+    if played_draws:
 
-    # empty list for decrypted copied draw objects
-    decrypted_played_draws = []
+        # creates a list of copied draw objects which are independent of database.
+        played_draw_copies = list(map(lambda x: copy.deepcopy(x), played_draws))
 
-    # decrypt each copied draw object and add it to decrypted_played_draws array.
-    for d in played_draw_copies:
-        user = User.query.filter_by(id=d.user_id).first()
-        d.view_draw(user.drawkey)
-        decrypted_played_draws.append(d)
+        # empty list for decrypted copied draw objects
+        decrypted_played_draws = []
 
-    # if played draws exist
-    if len(decrypted_played_draws) != 0:
-        return render_template('lottery.html', results=decrypted_played_draws, played=True)
+        # decrypt each copied draw object and add it to decrypted_played_draws array.
+        for d in played_draw_copies:
+            user = User.query.filter_by(id=d.user_id).first()
+            d.view_draw(user.drawkey)
+            decrypted_played_draws.append(d)
+
+        # if played draws exist
+        if len(decrypted_played_draws) != 0:
+            return render_template('lottery.html', results=decrypted_played_draws, played=True)
 
     # if no played draws exist [all draw entries have been played therefore wait for next lottery round]
     else:

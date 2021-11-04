@@ -14,13 +14,18 @@ class RegisterForm(FlaskForm):
     email = StringField(validators=[Required(), Email()])
     firstname = StringField(validators=[Required(), character_check])
     lastname = StringField(validators=[Required(), character_check])
-    phone = StringField(validators=[Required()])
+    phone = StringField(validators=[Required(), Length(min=13, max=13, message='Phone number must be 13 digits including hyphens.')])
     password = PasswordField(validators=[Required(),
                                          Length(min=6, max=12, message='Password must be between 6 and 12 characters in length.')])
     confirm_password = PasswordField(validators=[Required(), EqualTo('password', message='Both password fields must be equal!')])
     pinkey = StringField(validators=[Required(),
                                          Length(min=32, max=32, message='Pin key must be 32 characters..')])
     submit = SubmitField()
+
+    def validate_phone(self, phone):
+        n = re.compile(r'\d{4}-{1}\d{3}-{1}\d{4}')
+        if not n.match(self.phone.data):
+            raise ValidationError("Phone number is not valid.")
 
     def validate_password(self, password):
         p = re.compile(r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[*?!\'^+%&/()=}{$#@<>])')

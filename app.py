@@ -32,7 +32,7 @@ app.config['SECRET_KEY'] = 'LongAndRandomSecretKey'
 
 # initialise database
 db = SQLAlchemy(app)
-
+db.session.expire_on_commit = False
 
 # Security Headers
 csp = {
