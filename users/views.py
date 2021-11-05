@@ -1,6 +1,5 @@
 # IMPORTS
 import logging
-from functools import wraps
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, session, request
 from flask_login import current_user, login_user, logout_user, login_required
@@ -9,6 +8,7 @@ from app import db
 from models import User
 from users.forms import RegisterForm, LoginForm
 import pyotp
+
 
 # CONFIG
 users_blueprint = Blueprint('users', __name__, template_folder='templates')
@@ -76,8 +76,7 @@ def login():
         if not user or not check_password_hash(user.password, form.password.data):
 
             logging.warning('SECURITY - Failed log in attempt (authentication) [%s, %s]',
-                            form.email.data,
-                            request.remote_addr)
+                            form.email.data, request.remote_addr)
 
             # if no match create appropriate error message based on login attempts
             if session['logins'] == 3:
@@ -89,13 +88,14 @@ def login():
 
             return render_template('login.html', form=form)
 
-        if not pyotp.TOTP(user.pinkey).verify(form.pin.data): #### REMOVE NOT FOR PROPER FUNCTIOMALOITU
+        if pyotp.TOTP(user.pinkey).verify(form.pin.data):
 
             # if user is verified reset login attempts to 0
             session['logins'] = 0
 
             login_user(user)
 
+            # store details of most recent login in database
             user.last_logged_in = user.current_logged_in
             user.current_logged_in = datetime.now()
             db.session.commit()
@@ -107,7 +107,7 @@ def login():
             if current_user.role == 'admin':
                 return redirect(url_for('admin.admin'))
             else:
-                return redirect(url_for('lottery.lottery'))
+                return redirect(url_for('users.profile'))
 
         else:
             logging.warning('SECURITY - Failed log in attempt (2FA) [%s, %s]', form.email.data,
@@ -116,12 +116,14 @@ def login():
 
     return render_template('login.html', form=form)
 
+
 @users_blueprint.route('/logout')
 @login_required
 def logout():
     logging.warning('SECURITY - Log out [%s, %s, %s]', current_user.id, current_user.email, request.remote_addr)
     logout_user()
     return redirect(url_for('index'))
+
 
 # view user profile
 @users_blueprint.route('/profile')

@@ -1,13 +1,14 @@
 # IMPORTS
-import logging
 import copy
 from flask import Blueprint, render_template, request, flash
 from flask_login import login_required, current_user
 from app import db, requires_roles
 from models import Draw, User
 
+
 # CONFIG
 lottery_blueprint = Blueprint('lottery', __name__, template_folder='templates')
+
 
 # VIEWS
 # view lottery page
@@ -57,7 +58,7 @@ def view_draws():
     # decrypt each copied draw object and add it to decrypted_draws array.
     for d in draw_copies:
         user = User.query.filter_by(id=d.user_id).first()
-        d.view_draw(user.drawkey)
+        d.decrypt_draw(user.drawkey)
         decrypted_draws.append(d)
 
     # if playable draws exist
@@ -89,7 +90,7 @@ def check_draws():
         # decrypt each copied draw object and add it to decrypted_played_draws array.
         for d in played_draw_copies:
             user = User.query.filter_by(id=d.user_id).first()
-            d.view_draw(user.drawkey)
+            d.decrypt_draw(user.drawkey)
             decrypted_played_draws.append(d)
 
         # if played draws exist

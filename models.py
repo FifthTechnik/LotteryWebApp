@@ -3,7 +3,7 @@ from datetime import datetime
 from Crypto.Protocol.KDF import scrypt
 from Crypto.Random import get_random_bytes
 from cryptography.fernet import Fernet
-from flask_login import LoginManager, UserMixin
+from flask_login import UserMixin
 from werkzeug.security import generate_password_hash
 from app import db
 
@@ -73,7 +73,7 @@ class Draw(db.Model):
         self.win = win
         self.round = round
 
-    def view_draw(self, drawkey):
+    def decrypt_draw(self, drawkey):
         self.user_id = self.user_id
         self.draw = decrypt(self.draw, drawkey)
         self.played = self.played
@@ -91,12 +91,17 @@ class Draw(db.Model):
         self.round = self.round
         return self
 
+
+# functions used for encrypting and decrypting lottery draws
 def encrypt(data, drawkey):
     return Fernet(drawkey).encrypt(bytes(data, 'utf-8'))
+
 
 def decrypt(data, drawkey):
     return Fernet(drawkey).decrypt(data).decode("utf-8")
 
+
+# resets database and adds admin user
 def init_db():
     db.drop_all()
     db.create_all()

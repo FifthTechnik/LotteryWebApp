@@ -1,9 +1,9 @@
 # IMPORTS
-import copy
 from flask import Blueprint, render_template, request, flash
 from flask_login import login_required, current_user
 from app import db, requires_roles
 from models import User, Draw
+
 
 # CONFIG
 admin_blueprint = Blueprint('admin', __name__, template_folder='templates')
@@ -77,7 +77,7 @@ def view_winning_draw():
     # if a winning draw exists
     if current_winning_draw:
         admin_drawkey = User.query.filter_by(role='admin').first().drawkey
-        current_winning_draw.view_draw(admin_drawkey)
+        current_winning_draw.decrypt_draw(admin_drawkey)
         # re-render admin page with current winning draw and lottery round
         return render_template('admin.html', winning_draw=current_winning_draw, name=current_user.firstname)
 
@@ -107,7 +107,7 @@ def run_lottery():
 
             # decrypt winning draw
             admin_drawkey = User.query.filter_by(role='admin').first().drawkey
-            decrypted_current_winning_draw = current_winning_draw.view_draw(admin_drawkey)
+            decrypted_current_winning_draw = current_winning_draw.decrypt_draw(admin_drawkey)
 
             # for each unplayed user draw
             for draw in user_draws:
@@ -119,9 +119,7 @@ def run_lottery():
 
                 # get the owning user (instance/object)
                 user = User.query.filter_by(id=draw.user_id).first()
-                draw.view_draw(user.drawkey)
-
-
+                draw.decrypt_draw(user.drawkey)
 
                 # if user draw matches current unplayed winning draw
                 if draw.draw == decrypted_current_winning_draw.draw:

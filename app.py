@@ -7,11 +7,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_talisman import Talisman
 
+
 # LOGGING
 class SecurityFilter(logging.Filter):
     def filter(self, record):
         return "SECURITY" in record.getMessage()
-
 
 fh = logging.FileHandler('lottery.log', 'a')
 fh.setLevel(logging.WARNING)
@@ -64,10 +64,12 @@ def requires_roles(*roles):
         return wrapped
     return wrapper
 
+
 # HOME PAGE VIEW
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 # ERROR PAGE VIEWS
 @app.errorhandler(400)

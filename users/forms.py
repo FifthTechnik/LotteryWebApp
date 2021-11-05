@@ -3,6 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
 from wtforms.validators import Required, Email, Length, EqualTo, ValidationError
 
+
 def character_check(form,field):
     excluded_chars = "*?!'^+%&/()=}][{$#@<>"
     for char in field.data:
@@ -10,14 +11,17 @@ def character_check(form,field):
             raise ValidationError(
                 f"Character {char} is not allowed.")
 
+
 class RegisterForm(FlaskForm):
     email = StringField(validators=[Required(), Email()])
     firstname = StringField(validators=[Required(), character_check])
     lastname = StringField(validators=[Required(), character_check])
-    phone = StringField(validators=[Required(), Length(min=13, max=13, message='Phone number must be 13 digits including hyphens.')])
-    password = PasswordField(validators=[Required(),
-                                         Length(min=6, max=12, message='Password must be between 6 and 12 characters in length.')])
-    confirm_password = PasswordField(validators=[Required(), EqualTo('password', message='Both password fields must be equal!')])
+    phone = StringField(validators=[Required(),
+                                    Length(min=13, max=13, message='Phone number must be XXXX-XXX-XXXX.')])
+    password = PasswordField(validators=[Required(), Length(min=6, max=12, message='Password must be between 6 '
+                                                                                   'and 12 characters in length.')])
+    confirm_password = PasswordField(validators=[Required(),
+                                                 EqualTo('password', message='Both password fields must be equal!')])
     pinkey = StringField(validators=[Required(),
                                          Length(min=32, max=32, message='Pin key must be 32 characters..')])
     submit = SubmitField()
@@ -31,6 +35,7 @@ class RegisterForm(FlaskForm):
         p = re.compile(r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[*?!\'^+%&/()=}{$#@<>])')
         if not p.match(self.password.data):
             raise ValidationError("Password must contain: 1 uppercase, 1 lowercase, 1 digit and 1 special character.")
+
 
 class LoginForm(FlaskForm):
     email = StringField(validators=[Required(), Email()])
